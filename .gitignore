@@ -1,0 +1,3 @@
+img/       # ignore all files in the img/ directory
+old/       # ignore all files in the old/ directory
+.DS_Store  # ignore that .DS_Store file that OS X loves to make

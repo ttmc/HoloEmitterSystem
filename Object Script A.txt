@@ -1,0 +1,158 @@
+// Object Script A
+// (Programming Language = Linden Scripting Language, LSL)
+//
+// Part of Troy McConaghy's Holo-Emitter System
+// for Second Life and OpenSimulator
+//
+// Copyright (C) 2007 Troy McConaghy
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// 
+// You can get a copy of the GNU General Public License at 
+// http://www.gnu.org/licenses/gpl.txt
+// or by writing to the Free Software Foundation, Inc., 
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+// Global constants - should be changed if there are any other holo-emitters in the sim, both here and in all other scripts
+integer HE_channel = -9385735;
+
+// Global variables
+vector rel_pos;
+rotation rot;
+
+
+
+goto( vector destpos )
+{   //Based on warpPos
+    //R&D by Keknehv Psaltery, 05/25/2006
+    //with a little pokeing by Strife, and a bit more 
+    //some more munging by Talarus Luan
+    //Final cleanup by Keknehv Psaltery
+    // Compute the number of jumps necessary
+    integer jumps = (integer)(llVecDist(destpos, llGetPos()) / 10.0) + 1;
+    // Try and avoid stack/heap collisions
+    if (jumps > 100 )
+        jumps = 100;    //  1km should be plenty
+    list rules = [ PRIM_POSITION, destpos ];  //The start for the rules list
+    integer count = 1;
+    while ( ( count = count << 1 ) < jumps)
+        rules = (rules=[]) + rules + rules;   //should tighten memory use.
+    llSetPrimitiveParams( rules + llList2List( rules, (count - jumps) << 1, count) );
+}
+
+
+ping()
+{
+    llRegionSay(HE_channel, "ping"); // Sends out a ping on the HE_channel to determine the holo-emitter's position
+}
+
+
+default
+{
+    on_rez(integer start_param)
+    {
+        state repos;
+    }
+        
+    state_entry()
+    {
+        // This event is triggered if this script is dragged from inventory to the contents of an object
+        llListen(HE_channel, "", NULL_KEY, "");
+        ping();
+        llSetTimerEvent(2.0); // Just in case the first ping isn't heard, more are sent out until one gets heard
+    }
+    
+    timer()
+    {
+        ping();
+    }
+    
+    listen(integer channel, string name, key id, string message)
+    {
+        if (channel==HE_channel)
+        {
+            llSetTimerEvent(0.0); // Turns off the timed pings, since a ping was heard and a reply has been received
+            
+            vector pos = llGetPos();
+        
+            if (pos.z <= llGround(ZERO_VECTOR))
+            {
+                string obj_name = llGetObjectName();
+                llSay(0,"WARNING! The center of the object "+obj_name+" is below ground level.");
+                llSay(0,"The holo-emitter system won't be able to put it back there");
+                llSay(0,"because it can only place objects whose center is above ground level.");      
+            }
+                    
+            list pos_list = llCSV2List(message);
+            vector HE_pos = <llList2Float(pos_list,0), llList2Float(pos_list,1), llList2Float(pos_list,2)>;
+            rel_pos = pos - HE_pos;
+            
+            //llSay(0,"pos = "+(string)pos+", HE_pos = "+(string)HE_pos+", rel_pos = "+(string)rel_pos);
+            
+            rot = llGetRot();
+            //llSay(0, "I stored my position in rot, rot = "+(string)rot);
+        
+            state await_rerez;
+        }
+    }    
+}
+
+state await_rerez
+{
+    state_entry()
+    {
+        llSay(0,"You can now take me into your inventory and then put me in a scene-container from there.");
+    }
+    
+    on_rez(integer start_param)
+    {
+        state repos;
+    }
+}
+
+state repos
+{
+    state_entry()
+    {
+        //llSay(0,"Now in state repos");
+        llListen(HE_channel, "", NULL_KEY, "");
+        ping();
+        llSetTimerEvent(2.0); // Just in case the first ping isn't heard, more are sent out until one gets heard
+    }
+    
+    timer()
+    {
+        ping();
+    }
+    
+    listen(integer channel, string name, key id, string message)
+    {
+        if (channel==HE_channel)
+        {
+            llSetTimerEvent(0.0); // Turns off the timed pings, since a ping was heard and a reply has been received
+            
+            list pos_list = llCSV2List(message);
+            vector HE_pos = <llList2Float(pos_list,0), llList2Float(pos_list,1), llList2Float(pos_list,2)>;
+            vector pos = HE_pos + rel_pos;
+            
+            llSetRot(rot);
+            goto(pos);
+            llSetRot(rot);
+            goto(pos);
+            llSetRot(rot);
+            goto(pos);
+            llSetRot(rot); 
+            
+            // Now that the object is positioned, this script isn't needed anymore, so remove this script from the object's inventory
+            llRemoveInventory(llGetScriptName());
+        }
+    } 
+}

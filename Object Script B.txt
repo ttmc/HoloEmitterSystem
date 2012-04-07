@@ -1,0 +1,39 @@
+// Object Script B
+// (Programming Language = Linden Scripting Language, LSL)
+//
+// Part of Troy McConaghy's Holo-Emitter System
+// for Second Life and OpenSimulator
+//
+// Copyright (C) 2007 Troy McConaghy
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// 
+// You can get a copy of the GNU General Public License at 
+// http://www.gnu.org/licenses/gpl.txt
+// or by writing to the Free Software Foundation, Inc., 
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+
+// Global constants - should be changed if there are any other holo-emitters in the sim, both here and in all other scripts
+integer delete_channel = -3423489;
+
+default
+{
+    state_entry()
+    {
+        llListen(delete_channel, "", NULL_KEY, "delete");
+    }
+    
+    listen(integer channel, string name, key id, string message)
+    {
+        llDie();
+    }
+}

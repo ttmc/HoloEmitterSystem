@@ -1,0 +1,59 @@
+// Scene-Container Script
+// (Programming Language = Linden Scripting Language, LSL)
+//
+// Part of Troy McConaghy's Holo-Emitter System
+// for Second Life and OpenSimulator
+//
+// Copyright (C) 2007 Troy McConaghy
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// 
+// You can get a copy of the GNU General Public License at 
+// http://www.gnu.org/licenses/gpl.txt
+// or by writing to the Free Software Foundation, Inc., 
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+default
+{
+    on_rez(integer start_param)
+    {
+        string obj_desc = llToLower(llGetObjectDesc()); // = object description string, made lowercase
+        //llSay(0, "obj_desc = "+obj_desc);
+        
+        if (obj_desc == "live") // then the scene-container is live, so rez all of its contents then delete the scene-container
+        {
+            integer num_obj = llGetInventoryNumber(INVENTORY_OBJECT); // = number of objects in the scene-container's inventory
+            //llSay(0, "Number of objects in my inventory = "+(string)num_obj);
+
+            if (num_obj>0)
+            {
+                integer obj;
+                for (obj=0; obj<num_obj; obj++)
+                {
+                    //llSay(0, "Rezzing obj with inventory index = "+(string)obj);
+                    llRezAtRoot(llGetInventoryName(INVENTORY_OBJECT, obj), <0.0,0.0,1.0>+llGetPos(), ZERO_VECTOR, ZERO_ROTATION, 0);
+                    llSleep(0.5);
+                }
+                //llSay(0, "Done rezzing all objects in inventory");
+            }
+            llSleep(10.0);
+            llDie();
+        }
+        
+        // If the scene-container is not live, then control now passes to the state_entry() event handler
+    }
+    
+    state_entry()
+    {
+        llSay(0,"You can now add and remove objects from my inventory.");
+    }
+
+}

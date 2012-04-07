@@ -1,0 +1,92 @@
+// Holo-Emitter Script
+// (Programming Language = Linden Scripting Language, LSL)
+//
+// Part of Troy McConaghy's Holo-Emitter System
+// for Second Life and OpenSimulator
+//
+// Copyright (C) 2007 Troy McConaghy
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// 
+// You can get a copy of the GNU General Public License at 
+// http://www.gnu.org/licenses/gpl.txt
+// or by writing to the Free Software Foundation, Inc., 
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+// Global constants - should be changed if there are any other holo-emitters in the sim, both here and in all other scripts
+integer delete_channel = -3423489;
+integer menu_channel   = -1847395;
+integer HE_channel     = -9385735;
+
+// Global variables
+list options;
+integer menu_listen;
+
+
+clear_scene()
+{
+    llRegionSay(delete_channel, "delete"); // Sends a "delete" message to the entire sim on the delete_channel
+}
+
+
+default
+{
+    state_entry()
+    {
+        llSay(0,"Ready");
+        llListen(HE_channel,"",NULL_KEY,"ping");
+    }
+    
+    touch_start(integer total_number)
+    {        
+        // Generate the menu of scenes by scanning the holo-emitter's inventory
+        options = ["Clear"]; // even if there are no scenes in the holo-emitter, one option is always to clear the scene
+        integer num_scenes = llGetInventoryNumber(INVENTORY_OBJECT); // = number of objects in the holo-emitter's inventory
+        if (num_scenes>0)
+        {
+            integer scene_nbr;
+            for (scene_nbr=0; scene_nbr<num_scenes; scene_nbr++)
+            {
+                options = options + [llGetInventoryName(INVENTORY_OBJECT, scene_nbr)]; // appends another scene to the list of options
+            }
+        }
+        
+        llDialog(llDetectedKey(0), "Select the scene you would like to see:", options, menu_channel);
+        menu_listen = llListen(menu_channel, "", NULL_KEY, "");
+    }    
+    
+    listen(integer channel, string name, key id, string message)
+    {
+        if ((channel==HE_channel) && (message=="ping"))
+        {
+            //llSay(0,"I heard a ping, so I'm replying with my position now (on the HE_channel).");
+            vector HE_pos = llGetPos(); // = holo-emitter position <x,y,z>
+            string str = (string)HE_pos.x+","+(string)HE_pos.y+","+(string)HE_pos.z;
+            llRegionSay(HE_channel, str);
+            //llSay(0,"My position string is "+str);
+        }
+        else if (channel==menu_channel)
+        {
+            if (message=="Clear")
+            {
+                clear_scene();
+            }
+            else // message = the name of the scene-container to rez
+            {
+                clear_scene();
+                llRezAtRoot(message, <0.0,0.0,9.0>+llGetPos(), ZERO_VECTOR, ZERO_ROTATION, 1);
+            }
+            
+            llListenRemove(menu_listen);    
+        }        
+    }
+}
+
