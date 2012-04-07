@@ -1,1 +1,5 @@
-I'll post a link to the User's Guide here, once I know the URL.
+Check out the [User Guide](http://ttmc.github.com/HoloEmitterSystem).
+
+If the above link doesn't work, try this one:
+
+<http://ttmc.github.com/HoloEmitterSystem>
