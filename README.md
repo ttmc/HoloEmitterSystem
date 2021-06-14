@@ -1,5 +1,5 @@
-Check out the [User Guide](http://ttmc.github.com/HoloEmitterSystem).
+Check out the [User Guide](https://troymc.neocities.org/).
 
 If the above link doesn't work, try this one:
 
-<http://ttmc.github.com/HoloEmitterSystem>
+<https://troymc.neocities.org/>
